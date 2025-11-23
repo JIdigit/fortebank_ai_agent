@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = () => {
     const [messages, setMessages] = useState([
@@ -10,8 +11,10 @@ const ChatInterface = () => {
         }
     ]);
     const [inputValue, setInputValue] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -21,27 +24,38 @@ const ChatInterface = () => {
         scrollToBottom();
     }, [messages]);
 
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() && !selectedFile) return;
 
         const userMessage = {
             id: Date.now(),
             type: 'user',
-            content: inputValue
+            content: inputValue,
+            fileName: selectedFile ? selectedFile.name : null
         };
 
         setMessages(prev => [...prev, userMessage]);
         setInputValue('');
+        setSelectedFile(null);
         setIsLoading(true);
 
         try {
+            const formData = new FormData();
+            formData.append('message', userMessage.content);
+            if (selectedFile) {
+                formData.append('file', selectedFile);
+            }
+
             const response = await fetch('http://localhost:8000/chat', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: userMessage.content }),
+                body: formData,
             });
 
             if (!response.ok) {
@@ -68,6 +82,9 @@ const ChatInterface = () => {
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -97,7 +114,14 @@ const ChatInterface = () => {
                                     </div>
                                 )}
                                 <div>
-                                    {msg.content}
+                                    <div className="markdown-content">
+                                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                    </div>
+                                    {msg.fileName && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Attached: {msg.fileName}
+                                        </div>
+                                    )}
                                     {msg.image && (
                                         <div className="mt-3 rounded-lg overflow-hidden border border-gray-200">
                                             <img
@@ -134,6 +158,38 @@ const ChatInterface = () => {
 
                 <form className="input-area" onSubmit={handleSendMessage}>
                     <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                        accept=".xlsx,.xls"
+                    />
+                    <button
+                        type="button"
+                        className="attach-button"
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Attach Excel file"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                        </svg>
+                    </button>
+                    {selectedFile && (
+                        <div className="selected-file-badge">
+                            {selectedFile.name}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedFile(null);
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
+                                className="remove-file"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+                    <input
                         type="text"
                         className="chat-input"
                         placeholder="Describe a business situation or ask for analysis..."
@@ -141,7 +197,7 @@ const ChatInterface = () => {
                         onChange={(e) => setInputValue(e.target.value)}
                         disabled={isLoading}
                     />
-                    <button type="submit" className="send-button" disabled={isLoading || !inputValue.trim()}>
+                    <button type="submit" className="send-button" disabled={isLoading || (!inputValue.trim() && !selectedFile)}>
                         <Send size={20} />
                     </button>
                 </form>

@@ -10,24 +10,18 @@ class AnalyticsEngine:
         # Initialize the client. It will automatically look for OPENAI_API_KEY in env vars.
         self.client = OpenAI()
 
-    def analyze(self, query: str) -> dict:
+    def analyze(self, query: str, data_context: str = None) -> dict:
         """
         Analyzes the user query using OpenAI's GPT model.
         Returns a dictionary with 'text' and optional 'code'.
         """
-        try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini", 
-                messages=[
-                    {
-                        "role": "system", 
-                        "content": """You are an expert business analytics AI agent. Analyze the user's business situation, collect requirements, and support the process of improving business processes. 
+        system_prompt = """You are an expert business analytics AI agent. Analyze the user's business situation, collect requirements, and support the process of improving business processes. 
 
 If the user asks for a visualization, chart, or graph:
 1. Generate Python code using `matplotlib.pyplot` (as `plt`) to create the chart.
 2. DO NOT use `plt.show()`.
 3. Wrap the code in a markdown code block labeled `python`.
-4. Provide a brief textual explanation outside the code block.
+4. Provide a simple, non-technical explanation of what the chart shows. Do not mention the code.
 5. You have access to `pandas` (as `pd`) and `numpy` (as `np`).
 6. Use the 'Forte Bank' color palette: Magenta (#981E5B) and Gold (#EBB700) where appropriate.
 
@@ -39,6 +33,17 @@ data = [10, 20, 15, 25]
 plt.bar(['Q1', 'Q2', 'Q3', 'Q4'], data, color='#981E5B')
 plt.title('Quarterly Sales')
 ```"""
+
+        if data_context:
+            system_prompt += f"\n\nYou have access to the following dataset summary:\n{data_context}\nUse this data to answer the user's questions."
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o", 
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": system_prompt
                     },
                     {"role": "user", "content": query}
                 ],
@@ -52,10 +57,10 @@ plt.title('Quarterly Sales')
                 start = content.find("```python") + 9
                 end = content.find("```", start)
                 code = content[start:end].strip()
-                # Remove the code block from the text to avoid double display (optional, but cleaner)
-                # content = content[:start-9] + content[end+3:]
+                # Remove the code block from the text to avoid double display
+                content = content[:start-9] + content[end+3:]
             
-            return {"text": content, "code": code}
+            return {"text": content.strip(), "code": code}
             
         except Exception as e:
             print(f"OpenAI API Error: {e}")
