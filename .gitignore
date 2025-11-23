@@ -18,3 +18,4 @@ backend/sales_data.xlsx
 backend/excel_response.json
 backend/response.json
 backend/.env
+backend/.env
