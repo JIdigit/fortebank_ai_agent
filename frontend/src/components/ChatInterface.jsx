@@ -1,18 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import RequirementsPanel from './RequirementsPanel';
 
 const ChatInterface = () => {
     const [messages, setMessages] = useState([
         {
             id: 1,
             type: 'agent',
-            content: 'Hello! I am your Business Analytics Agent. How can I assist you with analyzing your business processes today?'
+            content: 'Здравствуйте! Я ваш AI бизнес-аналитик ForteBank. Я помогу вам:\n\n- **Диагностировать** бизнес-ситуации\n- **Собрать требования** для проектов\n- **Оптимизировать процессы**\n- **Создать документацию** (Use Cases, User Stories, диаграммы)\n\nКак я могу помочь вам сегодня?'
         }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [sessionId, setSessionId] = useState(null);
+    const [showRequirementsPanel, setShowRequirementsPanel] = useState(false);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -52,6 +55,9 @@ const ChatInterface = () => {
             if (selectedFile) {
                 formData.append('file', selectedFile);
             }
+            if (sessionId) {
+                formData.append('session_id', sessionId);
+            }
 
             const response = await fetch('http://localhost:8000/chat', {
                 method: 'POST',
@@ -63,6 +69,11 @@ const ChatInterface = () => {
             }
 
             const data = await response.json();
+
+            // Сохраняем session_id
+            if (data.session_id && !sessionId) {
+                setSessionId(data.session_id);
+            }
 
             const agentMessage = {
                 id: Date.now() + 1,
@@ -77,7 +88,7 @@ const ChatInterface = () => {
             const errorMessage = {
                 id: Date.now() + 1,
                 type: 'agent',
-                content: "I apologize, but I'm having trouble connecting to the analytics engine. Please ensure the backend server is running."
+                content: "Извините, возникла проблема с подключением к аналитическому движку. Пожалуйста, убедитесь, что backend сервер запущен."
             };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
@@ -93,7 +104,7 @@ const ChatInterface = () => {
             <div className="chat-container">
                 <header className="chat-header">
                     <div className="logo-container">
-                        <img src="/forte_logo.jpg" alt="Forte Bank Logo" />
+                        <img src="/clown_logo.svg" alt="Clown Analytics Logo" />
                     </div>
                     <div>
                         <h1>Forte Business Analytics</h1>
@@ -102,6 +113,15 @@ const ChatInterface = () => {
                             Online Agent
                         </div>
                     </div>
+                    <button
+                        onClick={() => setShowRequirementsPanel(true)}
+                        className="requirements-button"
+                        disabled={!sessionId || messages.length < 3}
+                        title="Сгенерировать документ требований"
+                    >
+                        <FileText size={20} />
+                        Создать документ
+                    </button>
                 </header>
 
                 <div className="messages-area">
@@ -202,6 +222,13 @@ const ChatInterface = () => {
                     </button>
                 </form>
             </div>
+
+            {showRequirementsPanel && sessionId && (
+                <RequirementsPanel
+                    sessionId={sessionId}
+                    onClose={() => setShowRequirementsPanel(false)}
+                />
+            )}
         </div>
     );
 };

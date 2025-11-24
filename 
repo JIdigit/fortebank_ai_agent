@@ -1,0 +1,29 @@
+[33mcommit fe7700a32009070f33ff97816331a10f33a970bf[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: Emir <emirbek.b@gmail.com>
+Date:   Sun Nov 23 21:20:30 2025 +0600
+
+    feat: Add backend/.env to gitignore to prevent secrets exposure
+
+[33mcommit f8671b3ccc0f312442ed1950a76b1b3d46383b8a[m
+Author: Emir <emirbek.b@gmail.com>
+Date:   Sun Nov 23 21:20:08 2025 +0600
+
+    feat: Add backend/.env to gitignore to prevent secrets exposure
+
+[33mcommit 03dbfd88c3ec890ab423040d816560dc5cf96ae2[m
+Author: Emir <emirbek.b@gmail.com>
+Date:   Sun Nov 23 20:54:36 2025 +0600
+
+    feat: Implement Excel analysis, chart generation, and UI improvements
+
+[33mcommit 1a55c1afec4967c7ce20fb562271c8740d017481[m
+Author: Emir <emirbek.b@gmail.com>
+Date:   Sun Nov 23 19:30:02 2025 +0600
+
+    Update chat completion model from gpt-4o to gpt-4o-mini.
+
+[33mcommit e1dd1fc9a1ecee3764648aee1a2bd5e4c38a4ab2[m
+Author: Emir <emirbek.b@gmail.com>
+Date:   Sun Nov 23 16:37:48 2025 +0600
+
+    feat: add AI business analytics agent with visualization generation and a chat interface

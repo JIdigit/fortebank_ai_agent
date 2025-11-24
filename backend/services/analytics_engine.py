@@ -10,43 +10,60 @@ class AnalyticsEngine:
         # Initialize the client. It will automatically look for OPENAI_API_KEY in env vars.
         self.client = OpenAI()
 
-    def analyze(self, query: str, data_context: str = None) -> dict:
+    def analyze(self, query: str, data_context: str = None, conversation_history: list = None) -> dict:
         """
         Analyzes the user query using OpenAI's GPT model.
         Returns a dictionary with 'text' and optional 'code'.
         """
-        system_prompt = """You are an expert business analytics AI agent. Analyze the user's business situation, collect requirements, and support the process of improving business processes. 
+        system_prompt = """
+        You are an expert Senior Business Analyst (AI Agent) at ForteBank. 
+        Your goal is to help users define business requirements, analyze processes, and create detailed documentation.
 
-If the user asks for a visualization, chart, or graph:
-1. Generate Python code using `matplotlib.pyplot` (as `plt`) to create the chart.
-2. DO NOT use `plt.show()`.
-3. Wrap the code in a markdown code block labeled `python`.
-4. Provide a simple, non-technical explanation of what the chart shows. Do not mention the code.
-5. You have access to `pandas` (as `pd`) and `numpy` (as `np`).
-6. Use the 'Forte Bank' color palette: Magenta (#981E5B) and Gold (#EBB700) where appropriate.
+        CRITICAL RULES (MUST FOLLOW):
+        1. **Proactive Analysis**: Do NOT just answer the user's question. Actively lead the conversation.
+           - If the user's request is broad, you MUST ask 3-5 clarifying questions immediately.
+           - Focus questions on: KPIs, Target Audience, Project Scope, Risks, Regulatory Constraints, and System Integrations.
+           - Example: "To create a detailed requirement, I need to clarify: Who is the target audience? What are the specific risks? Which systems need to be integrated?"
 
-Example response for chart:
-"Here is the sales data visualization."
-```python
-import matplotlib.pyplot as plt
-data = [10, 20, 15, 25]
-plt.bar(['Q1', 'Q2', 'Q3', 'Q4'], data, color='#981E5B')
-plt.title('Quarterly Sales')
-```"""
+        2. **Context Priority (Absolute Rule)**: 
+           - The User's current input is the SOURCE OF TRUTH.
+           - If the User's input contradicts your internal knowledge or previous context, **User's input WINS**.
+           - If you detect a conflict (e.g., User says "Courier delivery", but standard process is "Pickup"), you MUST explicitly flag it:
+             "Note: Standard process implies Pickup, but based on your request, we are documenting Courier Delivery. Please confirm."
+
+        3. **Structured Thinking**:
+           - Always structure your responses. Use bullet points, bold text for emphasis.
+           - When analyzing data, look for trends, anomalies, and business opportunities.
+
+        4. **Artifact Generation**:
+           - Proactively suggest creating artifacts (Use Cases, Diagrams, User Stories) when you have enough information.
+           - Do not generate the full document immediately if requirements are vague. Ask questions first.
+
+        Response Language: Russian (Professional, Business Tone).
+        """
+
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Добавляем историю диалога, если она есть
+        if conversation_history:
+            # Конвертируем историю в формат OpenAI messages
+            # Ожидаем, что history это список словарей {'role': 'user'/'assistant', 'content': '...'}
+            # Берем последние 10 сообщений для сохранения контекста, но не перегрузки
+            recent_history = conversation_history[-10:]
+            for msg in recent_history:
+                # Фильтруем системные сообщения или ошибки, если они попали в историю
+                if msg.get('role') in ['user', 'assistant']:
+                    messages.append({"role": msg['role'], "content": msg['content']})
 
         if data_context:
-            system_prompt += f"\n\nYou have access to the following dataset summary:\n{data_context}\nUse this data to answer the user's questions."
-
+            messages.append({"role": "system", "content": f"Data Context:\n{data_context}"})
+            
+        messages.append({"role": "user", "content": query})        
+        
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o", 
-                messages=[
-                    {
-                        "role": "system", 
-                        "content": system_prompt
-                    },
-                    {"role": "user", "content": query}
-                ],
+                model="gpt-4o-mini", 
+                messages=messages,
                 temperature=0.7,
             )
             content = response.choices[0].message.content
