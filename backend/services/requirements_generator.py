@@ -18,10 +18,32 @@ class RequirementsGenerator:
     def generate_business_requirements(self, conversation_history: List[Dict], context: Dict) -> Dict:
         """
         Генерирует полный документ бизнес-требований, включая Use Cases, User Stories и Диаграммы.
+        Сначала проводит валидацию на наличие Unhappy Path.
         """
         
+        conversation_text = "\n".join([
+            f"{msg['role']}: {msg['content']}" 
+            for msg in conversation_history
+        ])
+
+        # 0. Валидация (The "Devil's Advocate" Mode)
+        print("0️⃣ Validating requirements (Devil's Advocate)...")
+        validation_result = self.validate_requirements(conversation_text)
+        
+        if not validation_result.get('valid', True):
+            print("❌ Validation failed. Generating clarification questions.")
+            # Возвращаем "документ" с вопросами
+            return {
+                'version': '0.1 (Draft)',
+                'generated_at': datetime.now().isoformat(),
+                'goal': 'Требуется уточнение требований',
+                'description': 'В ходе анализа выявлены критические пробелы в требованиях, касающиеся обработки ошибок и нестандартных ситуаций (Unhappy Path).',
+                'validation_questions': validation_result.get('questions', []),
+                'is_draft': True
+            }
+
         # 1. Генерация основных требований
-        system_prompt = """Ты - опытный старший бизнес-аналитик ForteBank. Твоя задача - создать полный, профессиональный и детальный документ бизнес-требований (BRD).
+        system_prompt = """Ты - Senior AI Business Analyst ForteBank. Твоя задача - создать полный, профессиональный и детальный документ бизнес-требований (BRD).
 
 Документ должен быть максимально полным и содержать следующие разделы:
 1. **Цель проекта** - четкая формулировка бизнес-цели.
@@ -31,18 +53,15 @@ class RequirementsGenerator:
 5. **KPI** - измеримые метрики успеха.
 6. **Заинтересованные стороны** - роли и их интересы.
 7. **Функциональные требования** - детальный список функций.
-8. **Нефункциональные требования** - производительность, безопасность, доступность.
+8. **Нефункциональные требования** - производительность, безопасность, доступность (NFR).
 9. **Риски и ограничения** - потенциальные риски и регуляторные ограничения.
-10. **Интеграции** - список систем, с которыми требуется интеграция.
+10. **Интеграции** - список систем (ABS, CRM, Processing), с которыми требуется интеграция.
+11. **Обработка ошибок (Error Handling)** - описание поведения системы при сбоях.
+12. **Требования безопасности (Security)** - аутентификация, авторизация, шифрование, маскирование данных.
 
-ВАЖНО: Приоритезируй информацию, полученную от пользователя в текущем диалоге. Если информации недостаточно, сделай разумные предположения на основе банковских стандартов (Best Practices), но пометь их как требующие подтверждения.
+ВАЖНО: Приоритезируй информацию, полученную от пользователя в текущем диалоге.
 
 Формат ответа: JSON с ключами для каждого раздела."""
-
-        conversation_text = "\n".join([
-            f"{msg['role']}: {msg['content']}" 
-            for msg in conversation_history
-        ])
         
         user_prompt = f"""На основе следующего диалога создай детальный документ бизнес-требований:
 
@@ -62,6 +81,8 @@ class RequirementsGenerator:
 - non_functional_requirements
 - risks
 - integrations
+- error_handling
+- security_requirements
 """
 
         try:
@@ -99,7 +120,35 @@ class RequirementsGenerator:
         except Exception as e:
             print(f"Error generating requirements: {e}")
             return {"error": str(e)}
-    
+
+    def validate_requirements(self, conversation_text: str) -> Dict:
+        """
+        Проверяет наличие Unhappy Path сценариев.
+        Возвращает dict: {'valid': bool, 'questions': List[str]}
+        """
+        system_prompt = """You are a rigorous Business Analyst (Devil's Advocate). 
+Analyze the conversation and check if the user has defined "Unhappy Path" scenarios (errors, edge cases, failures).
+If they are missing, generate 3-5 sharp clarifying questions to expose these gaps.
+If the requirements seem robust enough (cover at least some errors/exceptions), return valid=True.
+
+Format: JSON { "valid": boolean, "questions": ["Question 1", "Question 2"] }"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Analyze this conversation:\n{conversation_text}"}
+                ],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+            import json
+            return json.loads(response.choices[0].message.content)
+        except Exception as e:
+            print(f"Validation error: {e}")
+            return {'valid': True} # Fallback to allow generation
+
     def generate_use_cases(self, requirements: Dict) -> List[Dict]:
         """
         Генерирует Use Cases на основе требований.
@@ -154,12 +203,17 @@ class RequirementsGenerator:
     
     def generate_user_stories(self, requirements: Dict) -> List[str]:
         """
-        Генерирует User Stories.
+        Генерирует User Stories с Gherkin Acceptance Criteria.
         """
         
         system_prompt = """Ты - Agile бизнес-аналитик. Создай детальные User Stories на русском языке.
 Формат: "Как <роль>, я хочу <действие>, чтобы <цель>"
-ОБЯЗАТЕЛЬНО добавь подробные критерии приемки (Acceptance Criteria) для каждой истории.
+
+CRITICAL: Acceptance Criteria MUST use Gherkin syntax (Given/When/Then).
+Example:
+- Given: Пользователь авторизован
+- When: Нажимает кнопку "Оплатить"
+- Then: Система проверяет баланс
 
 Формат ответа: JSON массив с user stories."""
 
@@ -168,7 +222,7 @@ class RequirementsGenerator:
 Функциональные требования: {requirements.get('functional_requirements', [])}
 Заинтересованные стороны: {requirements.get('stakeholders', [])}
 
-Верни массив User Stories в формате JSON с полями: story, acceptance_criteria."""
+Верни массив User Stories в формате JSON с полями: story, acceptance_criteria (список строк)."""
 
         try:
             response = self.client.chat.completions.create(
@@ -192,15 +246,27 @@ class RequirementsGenerator:
     def generate_process_diagram_code(self, requirements: Dict) -> str:
         """
         Генерирует код для диаграммы процесса в формате Mermaid.
+        Выбирает между Flowchart и Sequence Diagram.
         """
         
-        system_prompt = """Ты - бизнес-аналитик. Создай диаграмму бизнес-процесса в формате Mermaid (flowchart).
-Используй синтаксис Mermaid для создания понятной диаграммы процесса.
-Верни только код диаграммы без дополнительных объяснений и без markdown блоков."""
+        system_prompt = """Ты - системный аналитик. Создай диаграмму для визуализации процесса.
+Правила:
+1. Если процесс описывает интеграцию систем (Front -> API -> ABS), используй **Sequence Diagram** (sequenceDiagram).
+2. Если процесс описывает статусную модель или шаги пользователя, используй **Flowchart** (graph TD).
+3. Используй синтаксис Mermaid.
+4. Верни ТОЛЬКО код диаграммы.
+
+Пример Sequence:
+sequenceDiagram
+    Participant User
+    Participant App
+    User->>App: Login
+"""
 
         user_prompt = f"""Создай диаграмму процесса на основе:
 
 Описание: {requirements.get('description', '')}
+Интеграции: {requirements.get('integrations', [])}
 Функциональные требования: {requirements.get('functional_requirements', [])}
 
 Верни код Mermaid диаграммы."""
@@ -226,6 +292,20 @@ class RequirementsGenerator:
         Форматирует требования в полный Markdown документ.
         """
         
+        # Если это черновик с вопросами
+        if requirements.get('is_draft'):
+            questions_str = "\n".join([f"- {q}" for q in requirements.get('validation_questions', [])])
+            return f"""# ⚠️ ТРЕБУЮТСЯ УТОЧНЕНИЯ
+
+В ходе анализа выявлены критические пробелы в требованиях (Unhappy Path, Edge Cases).
+Для создания качественного документа, пожалуйста, ответьте на следующие вопросы:
+
+{questions_str}
+
+---
+*Пожалуйста, вернитесь в чат и предоставьте ответы на эти вопросы.*
+"""
+
         # Форматирование Use Cases
         use_cases_str = ""
         if requirements.get('use_cases'):
@@ -244,7 +324,6 @@ class RequirementsGenerator:
                     if isinstance(uc.get('alternative_flows'), list):
                         for flow in uc['alternative_flows']:
                             if isinstance(flow, dict):
-                                # Если это словарь (например, Title + Steps)
                                 title = flow.get('title', 'Сценарий')
                                 steps = flow.get('steps', [])
                                 use_cases_str += f"- **{title}**:\n"
@@ -254,7 +333,6 @@ class RequirementsGenerator:
                                 else:
                                     use_cases_str += f"  - {steps}\n"
                             else:
-                                # Если это просто строка
                                 use_cases_str += f"- {flow}\n"
                     else:
                         use_cases_str += str(uc.get('alternative_flows', ''))
@@ -268,7 +346,7 @@ class RequirementsGenerator:
             for us in requirements['user_stories']:
                 user_stories_str += f"- **Story:** {us.get('story', '')}\n"
                 if us.get('acceptance_criteria'):
-                    user_stories_str += "  - *Acceptance Criteria:*\n"
+                    user_stories_str += "  - *Acceptance Criteria (Gherkin):*\n"
                     if isinstance(us['acceptance_criteria'], list):
                         user_stories_str += "\n".join([f"    - {ac}" for ac in us['acceptance_criteria']])
                     else:
@@ -330,7 +408,7 @@ class RequirementsGenerator:
 
 ---
 
-## 8. Нефункциональные требования
+## 8. Нефункциональные требования (NFR)
 
 {self._format_list(requirements.get('non_functional_requirements', []))}
 
@@ -348,19 +426,31 @@ class RequirementsGenerator:
 
 ---
 
-## 11. Use Cases (Сценарии использования)
+## 11. Обработка ошибок (Error Handling)
+
+{self._format_list(requirements.get('error_handling', []))}
+
+---
+
+## 12. Требования безопасности (Security)
+
+{self._format_list(requirements.get('security_requirements', []))}
+
+---
+
+## 13. Use Cases (Сценарии использования)
 
 {use_cases_str}
 
 ---
 
-## 12. User Stories (Пользовательские истории)
+## 14. User Stories (Пользовательские истории)
 
 {user_stories_str}
 
 ---
 
-## 13. Диаграмма процесса
+## 15. Диаграмма процесса
 
 ```mermaid
 {requirements.get('diagram_code', '')}
