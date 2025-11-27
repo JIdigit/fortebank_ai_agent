@@ -103,25 +103,17 @@ const ChatInterface = () => {
         <div className="container">
             <div className="chat-container">
                 <header className="chat-header">
-                    <div className="logo-container">
-                        <img src="/clown_logo.svg" alt="Clown Analytics Logo" />
-                    </div>
-                    <div>
-                        <h1>Forte Business Analytics</h1>
-                        <div className="status-badge">
-                            <span className="status-indicator"></span>
-                            Online Agent
+                    {/* ЛЕВАЯ ЧАСТЬ: Группа Логотип + Текст "forte" */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div className="logo-container">
+                            {/* Используем путь, который вы предоставили */}
+                            <img src="/forte_logo3.svg" alt="Forte Bank Logo" />
                         </div>
+                        {/* Текст "forte" */}
                     </div>
-                    <button
-                        onClick={() => setShowRequirementsPanel(true)}
-                        className="requirements-button"
-                        disabled={!sessionId || messages.length < 3}
-                        title="Сгенерировать документ требований"
-                    >
-                        <FileText size={20} />
-                        Создать документ
-                    </button>
+
+                    {/* ПРАВАЯ ЧАСТЬ: Бейдж Assistant */}
+                    <span className="status-badge-header">AI Business Analyst</span>
                 </header>
 
                 <div className="messages-area">
@@ -177,6 +169,7 @@ const ChatInterface = () => {
                 </div>
 
                 <form className="input-area" onSubmit={handleSendMessage}>
+                    {/* Скрытый инпут для выбора файла */}
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -184,16 +177,8 @@ const ChatInterface = () => {
                         style={{ display: 'none' }}
                         accept=".xlsx,.xls"
                     />
-                    <button
-                        type="button"
-                        className="attach-button"
-                        onClick={() => fileInputRef.current?.click()}
-                        title="Attach Excel file"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                        </svg>
-                    </button>
+
+                    {/* Бейдж выбранного файла - остается на прежнем месте */}
                     {selectedFile && (
                         <div className="selected-file-badge">
                             {selectedFile.name}
@@ -209,18 +194,48 @@ const ChatInterface = () => {
                             </button>
                         </div>
                     )}
-                    <input
-                        type="text"
-                        className="chat-input"
-                        placeholder="Describe a business situation or ask for analysis..."
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        disabled={isLoading}
-                    />
+
+                    {/* НОВАЯ ОБЕРТКА: .input-wrapper */}
+                    <div className="input-wrapper">
+                        <input
+                            type="text"
+                            className="chat-input"
+                            placeholder="Напишите свое сообщение..."
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            disabled={isLoading}
+                        />
+                        {/* КНОПКА ПРИКРЕПЛЕНИЯ ФАЙЛА (Теперь внутри обертки) */}
+                        <button
+                            type="button"
+                            className="attach-button"
+                            onClick={() => fileInputRef.current?.click()}
+                            title="Attach Excel file"
+                        >
+                            {/* Иконка скрепки */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* КНОПКА ОТПРАВКИ */}
                     <button type="submit" className="send-button" disabled={isLoading || (!inputValue.trim() && !selectedFile)}>
                         <Send size={20} />
                     </button>
                 </form>
+
+            </div>
+            {/* НОВЫЙ БЛОК: КНОПКА ПОД ЧАТОМ (Photo 3) */}
+            <div className="floating-action-container">
+                <button
+                    onClick={() => setShowRequirementsPanel(true)}
+                    className="requirements-button"
+                    disabled={!sessionId || messages.length < 3}
+                    title="Сгенерировать документ требований"
+                >
+                    Создать документ
+                </button>
             </div>
 
             {showRequirementsPanel && sessionId && (
