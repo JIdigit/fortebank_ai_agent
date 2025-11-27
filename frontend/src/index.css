@@ -1,6 +1,24 @@
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
 :root {
   --bg-primary: #FFFFFF;
-  --bg-secondary: #F8F9FA;
+  --bg-secondary: #F0F0F0;
+  /* Светлый фон для области сообщений */
+  --bg-dark: #2A2A2A;
+  /* Новый темный фон для страницы */
   --text-primary: #1A1A1A;
   --text-secondary: #64748B;
   --accent: #981E5B;
@@ -8,32 +26,52 @@
   --accent-hover: #7D184B;
   --accent-gold: #EBB700;
   /* Forte Gold */
-  --border: #E2E8F0;
+  --border: #D1D5DB;
+  /* Более мягкий бордюр */
   --success: #10b981;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Новая, более глубокая тень для "парящего" эффекта */
+  --shadow-deep: 0 15px 30px -10px rgba(0, 0, 0, 0.4), 0 5px 15px -3px rgba(0, 0, 0, 0.2);
+  /* frontend/src/index.css: Добавьте в :root */
+  /* Новый градиент для кнопки отправки (сине-фиолетовый) */
+  --send-gradient: linear-gradient(135deg, #7b68ee 0%, #4a90e2 100%);
+  --send-gradient-hover: linear-gradient(135deg, #6a5acd 0%, #3a80c2 100%);
+  --badge-dark-gradient: linear-gradient(180deg, #333333, #1A1A1A);
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-}
+
 
 #root {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  /* Центрирование по горизонтали */
+  justify-content: center;
+  /* Центрирование по вертикали */
 }
 
 .container {
+  /* Сброс абсолютного позиционирования */
+  position: relative;
+  margin: 0;
+
+  /* Увеличенные адаптивные размеры для лучшей пропорции */
+  width: 85vw;
+  /* Ширина занимает 85% экрана (было 80vw) */
   max-width: 1200px;
-  margin: 0 auto;
+  /* Увеличено: комфортная ширина для чтения (было 1000px) */
+
+  height: 95vh;
+  /* Высота занимает 95% высоты экрана (было 90vh) */
+  max-height: 900px;
+  /* Увеличено (было 800px) */
+
+  min-width: 350px;
+  min-height: 500px;
+
+  /* Сохраняем внутренние свойства */
   padding: 2rem;
-  width: 100%;
   box-sizing: border-box;
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -42,32 +80,80 @@ body {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   background-color: var(--bg-primary);
-  border-radius: 1rem;
-  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  border: none;
   overflow: hidden;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-deep);
 }
 
+/* frontend/src/index.css: Проверьте .chat-header */
 .chat-header {
-  padding: 1.5rem;
-  border-bottom: 2px solid var(--accent-gold);
-  /* Gold accent line */
+  padding: 1.5rem 2rem;
+  border-bottom: none;
   display: flex;
   align-items: center;
   gap: 1rem;
-  background-color: var(--bg-primary);
+  background: linear-gradient(269.45deg, #CE1664 0.01%, #99164E 99.99%);
+  color: white;
+  border-top-left-radius: calc(1.5rem - 1px);
+  border-top-right-radius: calc(1.5rem - 1px);
+  /* КЛЮЧЕВОЙ МОМЕНТ */
+  justify-content: space-between;
 }
 
+/* frontend/src/index.css: Проверьте .status-badge-header */
+/* frontend/src/index.css: Обновите .status-badge-header */
+/* frontend/src/index.css: Проверьте .status-badge-header */
+.status-badge-header {
+  background: var(--badge-dark-gradient);
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  display: inline-block;
+}
+
+/* frontend/src/index.css: Добавьте новый CSS-блок в конец файла */
+
+.gradient-text {
+  /* Используем градиент, который уже определен для кнопки отправки */
+  background: var(--send-gradient);
+
+  /* Ключевые свойства для Safari/Chrome/Edge */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* Для других браузеров (поддержка ограничена) */
+  background-clip: text;
+
+  /* Убедитесь, что текст становится видимым */
+  font-weight: 600;
+}
+
+/* frontend/src/index.css: Добавьте новый блок */
+.floating-action-container {
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+/* frontend/src/index.css: Проверьте .logo-container */
+/* frontend/src/index.css: Обновите .logo-container */
 .logo-container {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  /* Увеличиваем размер */
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .logo-container img {
@@ -80,24 +166,24 @@ body {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent);
-  /* Magenta Title */
+  color: white;
 }
 
-.status-badge {
+.chat-header .status-badge {
+  background-color: #00A651;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
 }
 
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--success);
+.chat-header .status-indicator {
+  display: none;
 }
 
 .messages-area {
@@ -107,17 +193,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
 }
 
 .message {
   max-width: 80%;
   padding: 1rem 1.5rem;
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   line-height: 1.6;
   animation: fadeIn 0.3s ease-out;
   position: relative;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes fadeIn {
@@ -140,62 +226,142 @@ body {
 
 .message.user {
   align-self: flex-end;
-  background-color: var(--accent);
+  background-color: #2C2C2C;
   color: white;
-  border-bottom-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.5rem;
+  border-bottom-left-radius: 1.25rem;
+  /* Возвращаем скругление */
 }
 
 .message.agent {
   align-self: flex-start;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-bottom-left-radius: 0.25rem;
+  background-color: var(--bg-secondary);
+  border: none;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 1.25rem;
+  /* Возвращаем скругление */
   color: var(--text-primary);
 }
 
+/* frontend/src/index.css: Обновите .input-area */
 .input-area {
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
+  /* Уменьшаем вертикальный паддинг */
   border-top: 1px solid var(--border);
   display: flex;
-  gap: 1rem;
+  gap: 0;
+  /* Убираем зазор между инпутом и кнопкой */
   background-color: var(--bg-primary);
+  align-items: center;
+  /* Центрируем по вертикали */
 }
 
+/* Enable pointer events for interactive elements */
+.input-area>* {
+  pointer-events: auto;
+}
+
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border);
+  /* Softer border */
+  border-radius: 2rem;
+  padding: 0.75rem 1.5rem;
+  /* Slightly more padding */
+  min-height: 54px;
+  /* Fixed height for single line */
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  /* Floating shadow */
+}
+
+/* frontend/src/index.css: Добавьте новый блок */
+.input-wrapper {
+  flex: 1;
+  position: relative;
+  /* Ключевой шаг: для позиционирования скрепки */
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  /* Светлый фон */
+  border-radius: 1.5rem;
+  /* Большое скругление */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* Вдавленная тень */
+  margin-right: 0.5rem;
+  /* Отступ от кнопки отправки */
+}
+
+/* frontend/src/index.css: Обновите .chat-input */
 .chat-input {
   flex: 1;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background-color: transparent;
+  /* Делаем прозрачным, чтобы видеть фон обертки */
+  border: none;
+  /* Убираем все рамки */
+  border-radius: 1.5rem;
+  padding: 1rem 3.5rem 1rem 1.5rem;
+  /* Увеличиваем паддинг справа для иконки (3.5rem) */
   color: var(--text-primary);
   font-family: inherit;
   font-size: 1rem;
   transition: all 0.2s;
+  box-shadow: none;
+  /* Убираем тени */
+  outline: none;
+  /* Убираем стандартную обводку при фокусе */
 }
 
+/* Обязательно сбросьте фокус стили, если они еще не сброшены */
 .chat-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(152, 30, 91, 0.1);
+  box-shadow: none;
+  border-color: transparent;
 }
 
+.chat-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* frontend/src/index.css: Обновите .send-button */
 .send-button {
-  background-color: var(--accent);
+  /* Применяем градиент */
+  background: var(--send-gradient);
   color: white;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0 1.5rem;
+  border-radius: 1rem;
+  /* Закругленные углы */
+  padding: 0;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* Фиксированный размер */
+  width: 55px;
+  height: 55px;
+  flex-shrink: 0;
+
+  /* Тень */
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.5);
 }
 
-.send-button:hover {
-  background-color: var(--accent-hover);
+.send-button:hover:not(:disabled) {
+  background: var(--send-gradient-hover);
+  transform: translateY(-1px);
 }
+
+.send-button:active {
+  transform: scale(0.95);
+}
+
+
 
 .send-button:disabled {
   opacity: 0.5;
@@ -236,6 +402,7 @@ body {
 }
 
 /* File Attachment Styles */
+/* frontend/src/index.css: Обновите .attach-button */
 .attach-button {
   background: none;
   border: none;
@@ -246,10 +413,18 @@ body {
   align-items: center;
   justify-content: center;
   transition: color 0.2s;
+
+  /* АБСОЛЮТНОЕ ПОЗИЦИОНИРОВАНИЕ ВНУТРИ .input-wrapper */
+  position: absolute;
+  right: 1rem;
+  /* Смещаем к правому краю */
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
 }
 
 .attach-button:hover {
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .selected-file-badge {
@@ -279,28 +454,34 @@ body {
   opacity: 0.7;
 }
 
-/* Requirements Button */
+/* frontend/src/index.css: Обновите .requirements-button */
 .requirements-button {
-  background-color: var(--accent-gold);
-  color: var(--text-primary);
+  background: linear-gradient(180deg, #444444, #2C2C2C);
+  /* Темный градиент */
+  color: white;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  border-radius: 1rem;
+  padding: 1rem 3rem;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: auto;
-  font-size: 0.875rem;
+  margin: 0;
+  font-size: 1rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  /* Глубокая тень */
+  /* Убедимся, что она не растягивается на всю ширину */
+  align-self: center;
 }
 
 .requirements-button:hover:not(:disabled) {
-  background-color: #d4a000;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(235, 183, 0, 0.3);
+  background: #1A1A1A;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
 }
+
 
 .requirements-button:disabled {
   opacity: 0.5;
