@@ -120,6 +120,7 @@ async def chat(
             
             session["context"]["last_file"] = file.filename
             session["context"]["file_data"] = data_context
+            session["dataframe"] = df
         except Exception as e:
             return ChatResponse(
                 response=f"Ошибка обработки файла: {str(e)}",
@@ -153,7 +154,7 @@ async def chat(
     image_base64 = None
     if code:
         try:
-            image_base64 = code_executor.execute_plot_code(code)
+            image_base64 = code_executor.execute_plot_code(code, session.get("dataframe"))
         except Exception as e:
             text_response += f"\n\n[Ошибка генерации графика: {str(e)}]"
 

@@ -43,7 +43,7 @@ class CodeExecutor:
                         # We will rely more on the restricted globals for runtime security.
                         pass
 
-    def execute_plot_code(self, code: str) -> str:
+    def execute_plot_code(self, code: str, df: pd.DataFrame = None) -> str:
         """
         Executes the provided Python code in a restricted environment and returns the plot as a base64 string.
         The code is expected to create a plot using matplotlib.
@@ -62,6 +62,9 @@ class CodeExecutor:
             'io': io,
             'base64': base64,
         }
+        
+        if df is not None:
+            restricted_globals['df'] = df
         
         # Define a local dictionary to capture variables
         local_vars = {}
